@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabase, getSupabaseAdmin } from "@/lib/supabase";
 import { QUESTIONS } from "@/lib/questions";
 import { isAuthed } from "@/lib/auth";
 
@@ -80,7 +80,8 @@ export async function GET(request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    const supabase = getSupabase();
+    // Use service role to bypass RLS — admin auth is already enforced above
+    const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from("survey_responses")
       .select("id, answers, submitted_at")
