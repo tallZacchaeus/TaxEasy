@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase, getSupabaseAdmin } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 import { QUESTIONS } from "@/lib/questions";
 
 // POST /api/responses - submit a new survey response
@@ -28,6 +28,7 @@ export async function POST(request) {
     }
 
     // Insert the response
+    const supabase = getSupabase();
     const { data, error } = await supabase
       .from("survey_responses")
       .insert([
@@ -60,6 +61,7 @@ export async function POST(request) {
 // GET /api/responses - fetch all responses (for results page)
 export async function GET() {
   try {
+    const supabase = getSupabase();
     const { data, error } = await supabase
       .from("survey_responses")
       .select("id, answers, submitted_at")
