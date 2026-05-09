@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 import { QUESTIONS } from "@/lib/questions";
+import { isAuthed } from "@/lib/auth";
 
 // POST /api/responses - submit a new survey response
 export async function POST(request) {
@@ -58,8 +59,11 @@ export async function POST(request) {
   }
 }
 
-// GET /api/responses - fetch all responses (for results page)
-export async function GET() {
+// GET /api/responses - fetch all responses (admin only)
+export async function GET(request) {
+  if (!isAuthed(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const supabase = getSupabase();
     const { data, error } = await supabase

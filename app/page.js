@@ -1,14 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
-  BarChart3,
   Send,
 } from "lucide-react";
-import Link from "next/link";
 import { QUESTIONS } from "@/lib/questions";
 
 export default function SurveyPage() {
@@ -17,18 +15,10 @@ export default function SurveyPage() {
   const [answers, setAnswers] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [totalCount, setTotalCount] = useState(0);
 
   const progress = ((currentQ + 1) / QUESTIONS.length) * 100;
   const q = QUESTIONS[currentQ];
   const currentAnswer = answers[q?.id];
-
-  useEffect(() => {
-    fetch("/api/responses")
-      .then((r) => r.json())
-      .then((d) => setTotalCount(d.responses?.length || 0))
-      .catch(() => {});
-  }, []);
 
   const handleAnswer = (val) => {
     setAnswers({ ...answers, [q.id]: val });
@@ -121,14 +111,6 @@ export default function SurveyPage() {
           >
             Start Survey <ChevronRight size={20} />
           </button>
-
-          <Link
-            href="/results"
-            className="block w-full mt-3 text-emerald-700 hover:text-emerald-900 text-sm font-medium py-2 text-center"
-          >
-            <BarChart3 size={16} className="inline mr-1" />
-            View Results ({totalCount} {totalCount === 1 ? "response" : "responses"})
-          </Link>
         </div>
       </div>
     );
@@ -149,20 +131,12 @@ export default function SurveyPage() {
             Your response helps us build a tax app that actually works for
             Nigerians like you. We appreciate it.
           </p>
-          <div className="space-y-3">
-            <Link
-              href="/results"
-              className="block w-full bg-emerald-900 hover:bg-emerald-800 text-white font-semibold py-3 rounded-2xl transition-colors"
-            >
-              See Live Results
-            </Link>
-            <button
-              onClick={restart}
-              className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-medium py-3 rounded-2xl transition-colors"
-            >
-              Take Survey Again
-            </button>
-          </div>
+          <button
+            onClick={restart}
+            className="w-full bg-emerald-900 hover:bg-emerald-800 text-white font-semibold py-3 rounded-2xl transition-colors"
+          >
+            Take Survey Again
+          </button>
         </div>
       </div>
     );

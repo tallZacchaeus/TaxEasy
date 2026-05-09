@@ -1,23 +1,14 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { QUESTIONS } from "@/lib/questions";
+import { isAuthed } from "@/lib/auth";
 
 export async function POST(request) {
   try {
-    const { password } = await request.json();
-
-    if (!process.env.ADMIN_PASSWORD) {
-      return NextResponse.json(
-        { error: "Admin password not configured on server" },
-        { status: 500 }
-      );
-    }
-
-    if (password !== process.env.ADMIN_PASSWORD) {
+    if (!isAuthed(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Use admin client to ensure we get all rows
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from("survey_responses")
@@ -28,18 +19,12 @@ export async function POST(request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Build CSV
-    const headers = [
-      "id",
-      "submitted_at",
-      ...QUESTIONS.map((q) => q.id),
-    ];
+    const headers = ["id", "submitted_at", ...QUESTIONS.map((q) => q.id)];
 
     const rows = (data || []).map((r) => {
       const row = [r.id, r.submitted_at];
       for (const q of QUESTIONS) {
         const val = r.answers?.[q.id];
-        // Wrap in quotes and escape inner quotes
         const safe =
           val === undefined || val === null
             ? ""

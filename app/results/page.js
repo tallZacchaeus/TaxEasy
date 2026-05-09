@@ -1,20 +1,45 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, BarChart3, RefreshCw } from "lucide-react";
+import {
+  ArrowLeft,
+  BarChart3,
+  RefreshCw,
+  Lock,
+  LogOut,
+  Download,
+} from "lucide-react";
 import Link from "next/link";
 import { QUESTIONS } from "@/lib/questions";
 
 export default function ResultsPage() {
+  const [authed, setAuthed] = useState(null); // null = checking
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState(null);
+  const [authLoading, setAuthLoading] = useState(false);
+
   const [responses, setResponses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [exporting, setExporting] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/me")
+      .then((r) => r.json())
+      .then((d) => setAuthed(!!d.authenticated))
+      .catch(() => setAuthed(false));
+  }, []);
 
   const loadResponses = async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/responses");
+      if (res.status === 401) {
+        setAuthed(false);
+        return;
+      }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load");
       setResponses(data.responses || []);
@@ -26,8 +51,147 @@ export default function ResultsPage() {
   };
 
   useEffect(() => {
-    loadResponses();
-  }, []);
+    if (authed) loadResponses();
+  }, [authed]);
+
+  const login = async (e) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Login failed");
+      setPassword("");
+      setAuthed(true);
+    } catch (err) {
+      setAuthError(err.message);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await fetch("/api/admin/login", { method: "DELETE" });
+    } catch {}
+    setAuthed(false);
+    setUsername("");
+    setResponses([]);
+  };
+
+  const downloadCSV = async () => {
+    setExporting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/export", { method: "POST" });
+      if (res.status === 401) {
+        setAuthed(false);
+        return;
+      }
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Export failed");
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `taxeasy_responses_${
+        new Date().toISOString().split("T")[0]
+      }.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  if (authed === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-50 flex items-center justify-center p-4">
+        <div className="text-gray-500">Loading…</div>
+      </div>
+    );
+  }
+
+  if (!authed) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8">
+          <Link
+            href="/"
+            className="text-emerald-700 hover:text-emerald-900 text-sm font-medium flex items-center gap-1 mb-4"
+          >
+            <ArrowLeft size={16} /> Back to survey
+          </Link>
+
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock size={28} className="text-emerald-700" />
+            </div>
+            <h1 className="text-2xl font-bold text-emerald-900 mb-2">
+              Admin Login
+            </h1>
+            <p className="text-gray-600 text-sm">
+              Sign in to view survey results
+            </p>
+          </div>
+
+          <form onSubmit={login} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Username
+              </label>
+              <input
+                type="text"
+                autoComplete="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 transition-colors"
+                placeholder="Enter username"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 transition-colors"
+                placeholder="Enter password"
+              />
+            </div>
+
+            {authError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                {authError}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={!username || !password || authLoading}
+              className="w-full bg-emerald-900 hover:bg-emerald-800 disabled:bg-gray-300 text-white font-semibold py-3 rounded-2xl transition-colors"
+            >
+              {authLoading ? "Signing in…" : "Sign In"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const totalResponses = responses.length;
 
@@ -53,14 +217,33 @@ export default function ResultsPage() {
             >
               <ArrowLeft size={16} /> Back
             </Link>
-            <button
-              onClick={loadResponses}
-              disabled={loading}
-              className="text-emerald-700 hover:text-emerald-900 text-sm font-medium flex items-center gap-1 disabled:opacity-50"
-            >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />{" "}
-              Refresh
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={loadResponses}
+                disabled={loading}
+                className="text-emerald-700 hover:text-emerald-900 text-sm font-medium flex items-center gap-1 disabled:opacity-50"
+              >
+                <RefreshCw
+                  size={14}
+                  className={loading ? "animate-spin" : ""}
+                />{" "}
+                Refresh
+              </button>
+              <button
+                onClick={downloadCSV}
+                disabled={exporting || totalResponses === 0}
+                className="text-emerald-700 hover:text-emerald-900 text-sm font-medium flex items-center gap-1 disabled:opacity-50"
+              >
+                <Download size={14} />
+                {exporting ? "Exporting…" : "CSV"}
+              </button>
+              <button
+                onClick={logout}
+                className="text-gray-500 hover:text-gray-800 text-sm font-medium flex items-center gap-1"
+              >
+                <LogOut size={14} /> Logout
+              </button>
+            </div>
           </div>
 
           <div className="mb-6">
@@ -86,7 +269,7 @@ export default function ResultsPage() {
           ) : totalResponses === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <BarChart3 size={48} className="mx-auto mb-3 opacity-30" />
-              <p>No responses yet. Be the first!</p>
+              <p>No responses yet.</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -166,13 +349,6 @@ export default function ResultsPage() {
             </div>
           )}
         </div>
-
-        <Link
-          href="/"
-          className="block w-full bg-emerald-900 hover:bg-emerald-800 text-white font-semibold py-3 rounded-2xl transition-colors text-center"
-        >
-          Take the Survey
-        </Link>
 
         <p className="text-center text-xs text-gray-500 mt-4">
           TaxEasy &bull; TS Academy Capstone
