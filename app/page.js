@@ -263,8 +263,7 @@ export default function SurveyPage() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-gray-500 mt-4">
-          TaxEasy &bull; Anonymous responses
+        <p className="text-center text-xs text-gray-500 mt-4">Anonymous responses
         </p>
       </div>
     </div>
