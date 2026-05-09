@@ -114,42 +114,18 @@ export default function SurveyPage() {
           className="max-w-xl w-full bg-white rounded-3xl shadow-xl p-8 md:p-10"
         >
           <div className="text-center mb-6">
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.15, duration: 0.4, type: "spring" }}
-              className="inline-block bg-emerald-900 text-white px-4 py-1 rounded-full text-xs font-semibold tracking-wide mb-4"
-            >
-              GOVTECH / PUBLIC SERVICES
-            </motion.div>
-            <motion.h1
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25, duration: 0.4 }}
-              className="text-4xl md:text-5xl font-bold text-emerald-900 mb-2"
-            >
-              TaxEasy
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.35, duration: 0.4 }}
-              className="text-emerald-700 italic mb-6"
-            >
-              Tax made simple for everyday Nigerians
-            </motion.p>
             <motion.h2
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.4 }}
-              className="text-xl font-semibold text-gray-800 mb-3"
+              transition={{ delay: 0.15, duration: 0.4 }}
+              className="text-3xl md:text-4xl font-bold text-emerald-900 mb-4"
             >
               Help Us Build Something Useful
             </motion.h2>
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.4 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
               className="text-gray-600 leading-relaxed"
             >
               We&apos;re building a mobile app to make paying tax in Nigeria
@@ -162,7 +138,7 @@ export default function SurveyPage() {
             variants={optionsContainer}
             initial="hidden"
             animate="show"
-            transition={{ delayChildren: 0.55 }}
+            transition={{ delayChildren: 0.45 }}
             className="bg-emerald-50 rounded-2xl p-5 mb-6 space-y-2"
           >
             {[
@@ -184,7 +160,7 @@ export default function SurveyPage() {
           <motion.button
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.85, duration: 0.35 }}
+            transition={{ delay: 0.7, duration: 0.35 }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setView("survey")}

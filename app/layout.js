@@ -1,9 +1,9 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "TaxEasy Survey — Help Us Build Better Tax Tools",
+  title: "Help Us Build Something Useful — Tax Survey",
   description:
-    "A 3-minute survey to help shape TaxEasy, a mobile app for paying tax in Nigeria under the new 2026 tax laws.",
+    "A 3-minute survey on paying tax in Nigeria under the new 2026 tax laws.",
 };
 
 export default function RootLayout({ children }) {
