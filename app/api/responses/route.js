@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabase, getSupabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import { QUESTIONS, isQuestionVisible } from "@/lib/questions";
 import { isAuthed } from "@/lib/auth";
 
@@ -51,7 +51,8 @@ export async function POST(request) {
       else cleaned[q.id] = trimmed;
     }
 
-    const supabase = getSupabase();
+    // Admin client bypasses RLS — server already validated/sanitized above
+    const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from("survey_responses")
       .insert([
