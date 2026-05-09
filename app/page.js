@@ -290,7 +290,7 @@ export default function SurveyPage() {
         </div>
 
         <p className="text-center text-xs text-gray-500 mt-4">
-          TaxEasy &bull; TS Academy Capstone &bull; Anonymous responses
+          TaxEasy &bull; Anonymous responses
         </p>
       </div>
     </div>
