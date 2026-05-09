@@ -327,6 +327,25 @@ export default function SurveyPage() {
                 </motion.div>
               )}
 
+              {q.type === "text" && (
+                <div>
+                  <textarea
+                    value={currentAnswer || ""}
+                    onChange={(e) => handleAnswer(e.target.value)}
+                    maxLength={q.maxLength ?? 500}
+                    rows={5}
+                    placeholder="Share your thoughts here…"
+                    className="w-full p-4 rounded-2xl border-2 border-gray-200 focus:outline-none focus:border-emerald-700 transition-colors resize-none text-sm md:text-base text-gray-800"
+                  />
+                  <div className="flex justify-between mt-1 px-1 text-xs text-gray-500">
+                    <span>Optional — feel free to skip</span>
+                    <span>
+                      {(currentAnswer || "").length}/{q.maxLength ?? 500}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {q.type === "scale" && (
                 <div>
                   <div className="flex justify-between text-xs md:text-sm text-gray-600 mb-3 px-1">
@@ -393,17 +412,19 @@ export default function SurveyPage() {
                 </motion.button>
                 <motion.button
                   whileHover={
-                    currentAnswer !== undefined && !submitting
+                    (q.optional || currentAnswer !== undefined) && !submitting
                       ? { scale: 1.02 }
                       : {}
                   }
                   whileTap={
-                    currentAnswer !== undefined && !submitting
+                    (q.optional || currentAnswer !== undefined) && !submitting
                       ? { scale: 0.98 }
                       : {}
                   }
                   onClick={handleNext}
-                  disabled={currentAnswer === undefined || submitting}
+                  disabled={
+                    (!q.optional && currentAnswer === undefined) || submitting
+                  }
                   className="flex-1 bg-emerald-900 hover:bg-emerald-800 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-2xl transition-colors flex items-center justify-center gap-2"
                 >
                   {submitting ? (

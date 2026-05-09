@@ -10,6 +10,7 @@ import {
   Users,
   Calendar,
   ListChecks,
+  MessageSquareText,
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -145,12 +146,35 @@ export default function ResultsPage() {
 
   const sections = useMemo(() => {
     const map = new Map();
-    QUESTIONS.forEach((q) => {
+    QUESTIONS.filter((q) => q.type !== "text").forEach((q) => {
       if (!map.has(q.section)) map.set(q.section, []);
       map.get(q.section).push(q);
     });
     return Array.from(map.entries());
   }, []);
+
+  const textQuestions = useMemo(
+    () => QUESTIONS.filter((q) => q.type === "text"),
+    []
+  );
+
+  const comments = useMemo(() => {
+    const list = [];
+    responses.forEach((r) => {
+      textQuestions.forEach((q) => {
+        const text = r.answers?.[q.id];
+        if (typeof text === "string" && text.trim()) {
+          list.push({
+            id: `${r.id}-${q.id}`,
+            qid: q.id,
+            text: text.trim(),
+            date: r.submitted_at,
+          });
+        }
+      });
+    });
+    return list.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [responses, textQuestions]);
 
   const getDistribution = (qid) => {
     const counts = {};
@@ -402,6 +426,44 @@ export default function ResultsPage() {
                 </div>
               </motion.section>
             ))}
+
+            {textQuestions.length > 0 && (
+              <motion.section
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.35,
+                  delay: sections.length * 0.06,
+                }}
+              >
+                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-3 px-1 flex items-center gap-1.5">
+                  <MessageSquareText size={14} /> Comments
+                  <span className="ml-1 text-gray-400 font-medium">
+                    {comments.length}
+                  </span>
+                </h3>
+                <div className="bg-white rounded-2xl shadow-md p-5">
+                  {comments.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-8">
+                      No free-text comments yet.
+                    </p>
+                  ) : (
+                    <ul className="divide-y divide-gray-100">
+                      {comments.map((c) => (
+                        <li key={c.id} className="py-3 first:pt-0 last:pb-0">
+                          <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                            {c.text}
+                          </p>
+                          <p className="text-[11px] text-gray-400 mt-1">
+                            {formatDate(c.date)}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </motion.section>
+            )}
           </div>
         )}
 

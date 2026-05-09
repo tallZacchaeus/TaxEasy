@@ -16,8 +16,10 @@ export async function POST(request) {
       );
     }
 
-    // Validate that all required questions are answered
-    const missingQuestions = QUESTIONS.filter((q) => !(q.id in answers));
+    // Validate required questions are answered
+    const missingQuestions = QUESTIONS.filter(
+      (q) => !q.optional && !(q.id in answers)
+    );
     if (missingQuestions.length > 0) {
       return NextResponse.json(
         {
@@ -28,13 +30,26 @@ export async function POST(request) {
       );
     }
 
-    // Insert the response
+    // Sanitize text answers: enforce string + maxLength, drop if empty
+    const cleaned = { ...answers };
+    for (const q of QUESTIONS) {
+      if (q.type !== "text") continue;
+      const raw = cleaned[q.id];
+      if (raw === undefined || raw === null) {
+        delete cleaned[q.id];
+        continue;
+      }
+      const trimmed = String(raw).slice(0, q.maxLength ?? 500).trim();
+      if (!trimmed) delete cleaned[q.id];
+      else cleaned[q.id] = trimmed;
+    }
+
     const supabase = getSupabase();
     const { data, error } = await supabase
       .from("survey_responses")
       .insert([
         {
-          answers,
+          answers: cleaned,
           submitted_at: new Date().toISOString(),
         },
       ])
