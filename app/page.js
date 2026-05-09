@@ -8,7 +8,7 @@ import {
   Send,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { QUESTIONS } from "@/lib/questions";
+import { QUESTIONS, isQuestionVisible } from "@/lib/questions";
 
 const cardVariants = {
   enter: (direction) => ({
@@ -51,9 +51,31 @@ export default function SurveyPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  const progress = ((currentQ + 1) / QUESTIONS.length) * 100;
   const q = QUESTIONS[currentQ];
   const currentAnswer = answers[q?.id];
+
+  const visibleQuestions = QUESTIONS.filter((qq) =>
+    isQuestionVisible(qq, answers)
+  );
+  const visibleIndex = q
+    ? visibleQuestions.findIndex((vq) => vq.id === q.id)
+    : 0;
+  const visibleTotal = visibleQuestions.length;
+  const progress = ((visibleIndex + 1) / visibleTotal) * 100;
+
+  const findNextVisible = (fromIdx) => {
+    for (let i = fromIdx + 1; i < QUESTIONS.length; i++) {
+      if (isQuestionVisible(QUESTIONS[i], answers)) return i;
+    }
+    return -1;
+  };
+  const findPrevVisible = (fromIdx) => {
+    for (let i = fromIdx - 1; i >= 0; i--) {
+      if (isQuestionVisible(QUESTIONS[i], answers)) return i;
+    }
+    return -1;
+  };
+  const isLast = findNextVisible(currentQ) === -1;
 
   const handleAnswer = (val) => {
     setAnswers({ ...answers, [q.id]: val });
@@ -61,18 +83,20 @@ export default function SurveyPage() {
   };
 
   const handleNext = () => {
-    if (currentQ < QUESTIONS.length - 1) {
-      setDirection(1);
-      setCurrentQ(currentQ + 1);
-    } else {
+    const next = findNextVisible(currentQ);
+    if (next === -1) {
       submitSurvey();
+    } else {
+      setDirection(1);
+      setCurrentQ(next);
     }
   };
 
   const handleBack = () => {
-    if (currentQ > 0) {
+    const prev = findPrevVisible(currentQ);
+    if (prev !== -1) {
       setDirection(-1);
-      setCurrentQ(currentQ - 1);
+      setCurrentQ(prev);
     }
   };
 
@@ -80,10 +104,16 @@ export default function SurveyPage() {
     setSubmitting(true);
     setError(null);
     try {
+      const cleanAnswers = {};
+      for (const qq of QUESTIONS) {
+        if (isQuestionVisible(qq, answers) && qq.id in answers) {
+          cleanAnswers[qq.id] = answers[qq.id];
+        }
+      }
       const res = await fetch("/api/responses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers }),
+        body: JSON.stringify({ answers: cleanAnswers }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit");
@@ -245,7 +275,7 @@ export default function SurveyPage() {
               {q.section}
             </motion.span>
             <span className="text-xs text-gray-500 font-medium">
-              Question {currentQ + 1} of {QUESTIONS.length}
+              Question {visibleIndex + 1} of {visibleTotal}
             </span>
           </div>
           <div className="bg-white rounded-full h-2 overflow-hidden shadow-sm">
@@ -429,7 +459,7 @@ export default function SurveyPage() {
                 >
                   {submitting ? (
                     "Submitting..."
-                  ) : currentQ === QUESTIONS.length - 1 ? (
+                  ) : isLast ? (
                     <>
                       Submit <Send size={18} />
                     </>

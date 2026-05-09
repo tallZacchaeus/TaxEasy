@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabase, getSupabaseAdmin } from "@/lib/supabase";
-import { QUESTIONS } from "@/lib/questions";
+import { QUESTIONS, isQuestionVisible } from "@/lib/questions";
 import { isAuthed } from "@/lib/auth";
 
 // POST /api/responses - submit a new survey response
@@ -16,9 +16,12 @@ export async function POST(request) {
       );
     }
 
-    // Validate required questions are answered
+    // Validate required & visible questions are answered
     const missingQuestions = QUESTIONS.filter(
-      (q) => !q.optional && !(q.id in answers)
+      (q) =>
+        !q.optional &&
+        isQuestionVisible(q, answers) &&
+        !(q.id in answers)
     );
     if (missingQuestions.length > 0) {
       return NextResponse.json(
@@ -30,9 +33,13 @@ export async function POST(request) {
       );
     }
 
-    // Sanitize text answers: enforce string + maxLength, drop if empty
+    // Drop answers for questions hidden by current showIf, then sanitize text
     const cleaned = { ...answers };
     for (const q of QUESTIONS) {
+      if (!isQuestionVisible(q, cleaned)) {
+        delete cleaned[q.id];
+        continue;
+      }
       if (q.type !== "text") continue;
       const raw = cleaned[q.id];
       if (raw === undefined || raw === null) {
